@@ -32,9 +32,8 @@ This is an example on how to use Golang channels to build an execution pipeline
 
 **Output:**
 
-    2016/08/28 13:16:04 Generated message &{2016-08-28 13:16:04.386522533 +0100 WEST map[tweet:the #world is #awesome]}
-    2016/08/28 13:16:04 Generated message &{2016-08-28 13:16:04.386594976 +0100 WEST map[tweet:the #world is #awesome]}
-    2016/08/28 13:16:04 Generated message &{2016-08-28 13:16:04.386753983 +0100 WEST map[tweet:#welcome to my #world]}
+    2016/08/28 13:16:04 Generated message &{2016-08-28 13:16:04.386522533 +0100 WEST map[tweet:go #world is #awesome]}
+    2016/08/28 13:16:04 Generated message &{2016-08-28 13:16:04.386753983 +0100 WEST map[tweet:#welcome to go #world]}
     2016/08/28 13:16:04 Extracted hashtag #welcome
     2016/08/28 13:16:04 Extracted hashtag #world
     2016/08/28 13:16:04 Extracted hashtag #world
