@@ -1,0 +1,3 @@
+the #world is #awesome
+#welcome to my #world
+just exploring #golang
