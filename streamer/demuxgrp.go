@@ -28,7 +28,7 @@ func (demux *GroupDemux) Run(input <- chan Message) {
 	go func() {
 		for message := range input {
 			value := message.Get(demux.groupKey)
-			boundhash := int(hash(value, nchannels))
+			boundhash := int(Hash(value, nchannels))
 
 			// Emit message
 			demux.out[boundhash] <- message
