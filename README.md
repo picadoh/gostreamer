@@ -53,5 +53,10 @@ This is an example on how to use Golang channels to build an execution pipeline
     2016/08/28 13:16:04 report: map[#awesome:%!s(int=1) #golang:%!s(int=1) #world:%!s(int=2) #welcome:%!s(int=1)]
 
 ### Build
-    streamer$ go build -o streamer src/*.build
+    streamer$ go build -o streamer src/*.go
+
+### Running main
     streamer$ ./streamer
+
+### Running tests
+    streamer$ go test test/*.go
