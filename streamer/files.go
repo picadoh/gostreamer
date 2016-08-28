@@ -1,11 +1,11 @@
-package main
+package streamer
 
 import (
 	"os"
 	"bufio"
 )
 
-func readLines(path string) ([]string, error) {
+func ReadLines(path string) ([]string, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err

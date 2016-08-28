@@ -1,4 +1,4 @@
-package main
+package streamer
 
 import (
 	"sync"
@@ -6,7 +6,7 @@ import (
 
 type ProcessorFunction func(input Message, out*chan Message)
 
-func sprocessor(name string, demux Demux, input <- chan Message, processor ProcessorFunction) <- chan Message {
+func SProcessor(name string, demux Demux, input <- chan Message, processor ProcessorFunction) <- chan Message {
 	var wg sync.WaitGroup
 	numTasks := demux.GetFanOut()
 	wg.Add(numTasks)

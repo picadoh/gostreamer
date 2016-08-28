@@ -1,4 +1,4 @@
-package main
+package streamer
 
 type Demux interface {
 	Run(input <- chan Message)

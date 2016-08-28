@@ -1,13 +1,13 @@
-package main
+package streamer
 
 import (
-	"testing";
-  "github.com/picadoh/gostreamer/src"
+	"testing"
+  	"github.com/picadoh/gostreamer/streamer"
 )
 
 func TestCounterIncrement(t *testing.T) {
 
-	counter := main.NewCounter()
+	counter := streamer.NewCounter()
 
 	xCount1 := counter.Increment("x")
 	xCount2 := counter.Increment("x")
@@ -28,7 +28,7 @@ func TestCounterIncrement(t *testing.T) {
 
 func TestGetValue(t *testing.T) {
 
-	counter := main.NewCounter()
+	counter := streamer.NewCounter()
 
 	xCount := counter.GetValue("x")
 

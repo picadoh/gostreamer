@@ -32,31 +32,31 @@ This is an example on how to use Golang channels to build an execution pipeline
 
 **Output:**
 
-    2016/08/28 13:16:04 Generated message &{2016-08-28 13:16:04.386522533 +0100 WEST map[tweet:go #world is #awesome]}
-    2016/08/28 13:16:04 Generated message &{2016-08-28 13:16:04.386753983 +0100 WEST map[tweet:#welcome to go #world]}
-    2016/08/28 13:16:04 Extracted hashtag #welcome
-    2016/08/28 13:16:04 Extracted hashtag #world
-    2016/08/28 13:16:04 Extracted hashtag #world
-    2016/08/28 13:16:04 Counted #world/1
-    2016/08/28 13:16:04 Extracted hashtag #awesome
-    2016/08/28 13:16:04 Publishing #world/1
-    2016/08/28 13:16:04 Counted #awesome/1
-    2016/08/28 13:16:04 Publishing #awesome/1
-    2016/08/28 13:16:04 Counted #world/2
-    2016/08/28 13:16:04 Publishing #world/2
-    2016/08/28 13:16:04 Generated message &{2016-08-28 13:16:04.386777564 +0100 WEST map[tweet:just exploring #golang]}
-    2016/08/28 13:16:04 Counted #welcome/1
-    2016/08/28 13:16:04 Extracted hashtag #golang
-    2016/08/28 13:16:04 Publishing #welcome/1
-    2016/08/28 13:16:04 Counted #golang/1
-    2016/08/28 13:16:04 Publishing #golang/1
-    2016/08/28 13:16:04 report: map[#awesome:%!s(int=1) #golang:%!s(int=1) #world:%!s(int=2) #welcome:%!s(int=1)]
+    2016/08/28 14:05:58 Generated message &{2016-08-28 14:05:58.919532613 +0100 WEST map[tweet:the #world is #awesome]}
+    2016/08/28 14:05:58 Generated message &{2016-08-28 14:05:58.919722092 +0100 WEST map[tweet:#welcome to my #world]}
+    2016/08/28 14:05:58 Extracted hashtag #welcome
+    2016/08/28 14:05:58 Extracted hashtag #world
+    2016/08/28 14:05:58 Counted #world/1
+    2016/08/28 14:05:58 Publishing #world/1
+    2016/08/28 14:05:58 Extracted hashtag #world
+    2016/08/28 14:05:58 Generated message &{2016-08-28 14:05:58.919751818 +0100 WEST map[tweet:just exploring #golang]}
+    2016/08/28 14:05:58 Extracted hashtag #awesome
+    2016/08/28 14:05:58 Counted #world/2
+    2016/08/28 14:05:58 Publishing #world/2
+    2016/08/28 14:05:58 Counted #awesome/1
+    2016/08/28 14:05:58 Extracted hashtag #golang
+    2016/08/28 14:05:58 Publishing #awesome/1
+    2016/08/28 14:05:58 Counted #golang/1
+    2016/08/28 14:05:58 Publishing #golang/1
+    2016/08/28 14:05:58 Counted #welcome/1
+    2016/08/28 14:05:58 Publishing #welcome/1
+    2016/08/28 14:05:58 report: map[#welcome:%!s(int=1) #awesome:%!s(int=1) #golang:%!s(int=1) #world:%!s(int=2)]
 
 ### Build
-    streamer$ go build -o streamer src/*.go
+    streamer$ go build -o bin/tweetpipeline src/*.go
 
 ### Running main
-    streamer$ ./streamer
+    streamer$ ./bin/tweetpipeline
 
 ### Running tests
     streamer$ go test test/*.go

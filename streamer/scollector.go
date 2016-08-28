@@ -1,4 +1,4 @@
-package main
+package streamer
 
 import (
 	"sync"
@@ -6,7 +6,7 @@ import (
 
 type CollectorFunction func(out* chan Message)
 
-func scollector(name string, collector CollectorFunction) <- chan Message {
+func SCollector(name string, collector CollectorFunction) <- chan Message {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
