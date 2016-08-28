@@ -56,7 +56,7 @@ This is an example on how to use Golang channels to build an execution pipeline
     streamer$ go build tweetpipeline.go
 
 ### Running main
-    streamer$ ./tweetpipeline
+    streamer$ ./tweetpipeline tweets.txt
 
 ### Running tests
     streamer$ go test test/*.go

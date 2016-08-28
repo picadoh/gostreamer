@@ -4,10 +4,12 @@ import (
 	"log"
 	"strings"
 	"github.com/picadoh/gostreamer/streamer"
+	"os"
+	"fmt"
 )
 
-func collector(out *chan streamer.Message) {
-	lines, _ := streamer.ReadLines("tweets.txt")
+func TweetsFileCollector(out *chan streamer.Message) {
+	lines, _ := streamer.ReadLines(os.Args[1])
 
 	for _, line := range lines {
 		out_message := streamer.NewMessage()
@@ -17,7 +19,7 @@ func collector(out *chan streamer.Message) {
 	}
 }
 
-func extractor(input streamer.Message, out *chan streamer.Message) {
+func HashTagExtractor(input streamer.Message, out *chan streamer.Message) {
 	tweet, _ := input.Get("tweet").(string)
 
 	words := strings.Split(tweet, " ")
@@ -32,17 +34,17 @@ func extractor(input streamer.Message, out *chan streamer.Message) {
 	}
 }
 
-func publisher(input streamer.Message, out *chan streamer.Message) {
+func HashTagCountPublisher(input streamer.Message, out *chan streamer.Message) {
 	hashtag, _ := input.Get("hashtag").(string)
 	count, _ := input.Get("count").(int)
 
 	log.Printf("Publishing %s/%d\n", hashtag, count)
 }
 
-func pipeline() {
-	sequence := streamer.SCollector("collector", collector)
+func RunPipeline() {
+	sequence := streamer.SCollector("collector", TweetsFileCollector)
 
-	extracted := streamer.SProcessor("extractor", streamer.NewRandomDemux(5), sequence, extractor)
+	extracted := streamer.SProcessor("extractor", streamer.NewRandomDemux(5), sequence, HashTagExtractor)
 
 	counter := streamer.NewCounter()
 	counted := streamer.SProcessor("counter", streamer.NewGroupDemux(5, "hashtag"), extracted,
@@ -60,11 +62,19 @@ func pipeline() {
 			*out <- out_message
 		})
 
-	<-streamer.SProcessor("publisher", streamer.NewGroupDemux(5, "hashtag"), counted, publisher)
+	<-streamer.SProcessor("publisher", streamer.NewGroupDemux(5, "hashtag"), counted, HashTagCountPublisher)
 
 	log.Printf("report: %s\n", counter.Count)
 }
 
+func ValidateArguments() {
+	if (len(os.Args) < 2) {
+		fmt.Println("Usage: " + os.Args[0] + " <path/to/tweets/file>")
+		os.Exit(2)
+	}
+}
+
 func main() {
-	pipeline()
+	ValidateArguments()
+	RunPipeline()
 }
