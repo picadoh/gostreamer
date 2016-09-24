@@ -53,10 +53,22 @@ This is an example on how to use Golang channels to build an execution pipeline
     2016/08/28 14:05:58 report: map[#welcome:%!s(int=1) #awesome:%!s(int=1) #golang:%!s(int=1) #world:%!s(int=2)]
 
 ### Build
+
     streamer$ go build tweetpipeline.go
 
-### Running main
-    streamer$ ./tweetpipeline tweets.txt
+### Running (File collector)
+
+    streamer$ ./tweetpipeline -f tweets.txt
+
+### Running (Socket collector)
+
+    streamer$ ./tweetpipeline -l 9999
+
+You may want to produce some test messages, a simple way of doing it is by using nc command
+
+    $ nc localhost 9999
+    hello #world
 
 ### Running tests
+
     streamer$ go test test/*.go
