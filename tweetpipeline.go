@@ -6,15 +6,31 @@ import (
 	"github.com/picadoh/gostreamer/streamer"
 	"os"
 	"fmt"
+	"net"
+	"bufio"
 )
 
 func TweetsFileCollector(out *chan streamer.Message) {
-	lines, _ := streamer.ReadLines(os.Args[1])
+	lines, _ := streamer.ReadLines(os.Args[2])
 
 	for _, line := range lines {
 		out_message := streamer.NewMessage()
 		out_message.Put("tweet", line)
 		log.Printf("Generated message %s\n", out_message)
+		*out <- out_message
+	}
+}
+
+func TweetsSocketCollector(out *chan streamer.Message) {
+	listener, _ := net.Listen("tcp", ":" + os.Args[2])
+	conn, _ := listener.Accept()
+
+	for {
+		line, _ := bufio.NewReader(conn).ReadString('\n')
+		log.Printf("Received raw message from socket: %s\n", line)
+
+		out_message := streamer.NewMessage()
+		out_message.Put("tweet", line)
 		*out <- out_message
 	}
 }
@@ -41,8 +57,8 @@ func HashTagCountPublisher(input streamer.Message, out *chan streamer.Message) {
 	log.Printf("Publishing %s/%d\n", hashtag, count)
 }
 
-func RunPipeline() {
-	sequence := streamer.SCollector("collector", TweetsFileCollector)
+func RunPipeline(tweetSource streamer.CollectorFunction) {
+	sequence := streamer.SCollector("collector", tweetSource)
 
 	extracted := streamer.SProcessor("extractor", streamer.NewRandomDemux(5), sequence, HashTagExtractor)
 
@@ -67,14 +83,27 @@ func RunPipeline() {
 	log.Printf("report: %s\n", counter.Count)
 }
 
-func ValidateArguments() {
-	if (len(os.Args) < 2) {
-		fmt.Println("Usage: " + os.Args[0] + " <path/to/tweets/file>")
-		os.Exit(2)
+func DefineSourceCollectorFromArgs() streamer.CollectorFunction {
+	if (len(os.Args) < 3 || (os.Args[1] != "-f" && os.Args[1] != "-l")) {
+		return nil
 	}
+
+	if (os.Args[1] == "-f") {
+		return TweetsFileCollector
+	} else {
+		return TweetsSocketCollector
+	}
+
+	return nil
 }
 
 func main() {
-	ValidateArguments()
-	RunPipeline()
+	var tweetSource = DefineSourceCollectorFromArgs()
+
+	if (tweetSource == nil) {
+		fmt.Println("Usage: " + os.Args[0] + " [-f <path/to/tweets/file> | -l <port>]")
+		os.Exit(2)
+	}
+
+	RunPipeline(tweetSource)
 }
