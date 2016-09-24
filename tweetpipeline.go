@@ -11,6 +11,7 @@ import (
 func TweetsFileCollector(out *chan streamer.Message) {
 	lines, _ := streamer.ReadLines(os.Args[1])
 
+	rand.Intn(50);
 	for _, line := range lines {
 		out_message := streamer.NewMessage()
 		out_message.Put("tweet", line)

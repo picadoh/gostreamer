@@ -11,7 +11,7 @@ func SProcessor(name string, demux Demux, input <- chan Message, processor Proce
 	numTasks := demux.GetFanOut()
 	wg.Add(numTasks)
 
-	out := make(chan Message, 100)
+	out := make(chan Message)
 
 	work := func(taskId int, inputStream <- chan Message) {
 		//log.Printf("[%s] starting task %d\n", name, taskId)

@@ -1,4 +1,4 @@
-package streamer
+package streamer_test
 
 import (
 	"testing"
