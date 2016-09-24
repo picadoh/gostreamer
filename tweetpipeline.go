@@ -98,6 +98,8 @@ func DefineSourceCollectorFromArgs() streamer.CollectorFunction {
 }
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+
 	var tweetSource = DefineSourceCollectorFromArgs()
 
 	if (tweetSource == nil) {
