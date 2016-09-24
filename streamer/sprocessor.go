@@ -4,9 +4,9 @@ import (
 	"sync"
 )
 
-type ProcessorFunction func(input Message, out*chan Message)
+type ProcessorFunction func(cfg Config, input Message, out*chan Message)
 
-func SProcessor(name string, demux Demux, input <- chan Message, processor ProcessorFunction) <- chan Message {
+func SProcessor(cfg Config, name string, demux Demux, input <- chan Message, processor ProcessorFunction) <- chan Message {
 	var wg sync.WaitGroup
 	numTasks := demux.GetFanOut()
 	wg.Add(numTasks)
@@ -18,7 +18,7 @@ func SProcessor(name string, demux Demux, input <- chan Message, processor Proce
 
 		for message := range inputStream {
 			//log.Printf("[%s] Task %d picked up message %s\n", name, taskId, message)
-			processor(message, &out)
+			processor(cfg, message, &out)
 		}
 
 		//log.Printf("[%s] ending task %d\n", name, taskId)

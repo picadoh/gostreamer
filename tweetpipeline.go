@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-func TweetsFileCollector(out *chan streamer.Message) {
-	lines, _ := streamer.ReadLines(os.Args[2])
+func TweetsFileCollector(cfg streamer.Config, out *chan streamer.Message) {
+	lines, _ := streamer.ReadLines(cfg.GetString("source.file"))
 
 	for _, line := range lines {
 		out_message := streamer.NewMessage()
@@ -22,8 +22,8 @@ func TweetsFileCollector(out *chan streamer.Message) {
 	}
 }
 
-func TweetsSocketCollector(out *chan streamer.Message) {
-	listener, _ := net.Listen("tcp", ":" + os.Args[2])
+func TweetsSocketCollector(cfg streamer.Config, out *chan streamer.Message) {
+	listener, _ := net.Listen("tcp", ":" + cfg.GetString("source.port"))
 	conn, _ := listener.Accept()
 
 	for {
@@ -39,7 +39,7 @@ func TweetsSocketCollector(out *chan streamer.Message) {
 	}
 }
 
-func HashTagExtractor(input streamer.Message, out *chan streamer.Message) {
+func HashTagExtractor(cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
 	tweet, _ := input.Get("tweet").(string)
 
 	words := strings.Split(tweet, " ")
@@ -54,17 +54,22 @@ func HashTagExtractor(input streamer.Message, out *chan streamer.Message) {
 	}
 }
 
-func HashTagCountPublisher(input streamer.Message, out *chan streamer.Message) {
+func HashTagCountPublisher(cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
 	hashtag, _ := input.Get("hashtag").(string)
 	count, _ := input.Get("count").(int)
 
 	log.Printf("Publishing %s/%d\n", hashtag, count)
 }
 
-func RunPipeline(tweetSource streamer.CollectorFunction) {
-	sequence := streamer.SCollector("collector", tweetSource)
+func RunPipeline(cfg streamer.Config) {
+	var tweetSource = defineTweetSource(cfg)
+	var extractorParallelismHint = cfg.GetInt("parallelism.extractor")
+	var counterParallelismHint = cfg.GetInt("parallelism.counter")
+	var publisherParallelismHint = cfg.GetInt("parallelism.publisher")
 
-	extracted := streamer.SProcessor("extractor", streamer.NewRandomDemux(5), sequence, HashTagExtractor)
+	sequence := streamer.SCollector(cfg, "collector", tweetSource)
+
+	extracted := streamer.SProcessor(cfg, "extractor", streamer.NewRandomDemux(extractorParallelismHint), sequence, HashTagExtractor)
 
 	counter := streamer.NewCounter()
 
@@ -76,8 +81,8 @@ func RunPipeline(tweetSource streamer.CollectorFunction) {
 		}
 	}()
 
-	counted := streamer.SProcessor("counter", streamer.NewGroupDemux(5, "hashtag"), extracted,
-		func(input streamer.Message, out*chan streamer.Message) {
+	counted := streamer.SProcessor(cfg, "counter", streamer.NewGroupDemux(counterParallelismHint, "hashtag"), extracted,
+		func(cfg streamer.Config, input streamer.Message, out*chan streamer.Message) {
 			hashtag := input.Get("hashtag").(string)
 
 			count := counter.Increment(hashtag)
@@ -89,34 +94,35 @@ func RunPipeline(tweetSource streamer.CollectorFunction) {
 			*out <- out_message
 		})
 
-	<-streamer.SProcessor("publisher", streamer.NewGroupDemux(5, "hashtag"), counted, HashTagCountPublisher)
+	<-streamer.SProcessor(cfg, "publisher", streamer.NewGroupDemux(publisherParallelismHint, "hashtag"), counted, HashTagCountPublisher)
 
 	log.Printf("final count report: %s\n", counter.Count)
 }
 
-func DefineSourceCollectorFromArgs() streamer.CollectorFunction {
-	if (len(os.Args) < 3 || (os.Args[1] != "-f" && os.Args[1] != "-l")) {
-		return nil
+func defineTweetSource(cfg streamer.Config) streamer.CollectorFunction {
+	switch cfg.GetString("source.mode") {
+	case "file": return TweetsFileCollector
+	case "socket": return TweetsSocketCollector
 	}
-
-	if (os.Args[1] == "-f") {
-		return TweetsFileCollector
-	} else {
-		return TweetsSocketCollector
-	}
-
 	return nil
 }
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
 
-	var tweetSource = DefineSourceCollectorFromArgs()
-
-	if (tweetSource == nil) {
-		fmt.Println("Usage: " + os.Args[0] + " [-f <path/to/tweets/file> | -l <port>]")
+	if (len(os.Args) < 2) {
+		fmt.Println("Usage: " + os.Args[0] + " [<path/to/config/file>]")
 		os.Exit(2)
 	}
 
-	RunPipeline(tweetSource)
+	var cfg, err = streamer.LoadProperties(os.Args[1])
+
+	if (err != nil) {
+		fmt.Printf("An error ocurred reading the properties file %s [cause: %s]\n", os.Args[1], err)
+		os.Exit(2)
+	}
+
+	log.Printf("Loaded configuration: %s\n", cfg.ToString())
+
+	RunPipeline(cfg)
 }

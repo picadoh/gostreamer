@@ -4,9 +4,9 @@ import (
 	"sync"
 )
 
-type CollectorFunction func(out* chan Message)
+type CollectorFunction func(cfg Config, out* chan Message)
 
-func SCollector(name string, collector CollectorFunction) <- chan Message {
+func SCollector(cfg Config, name string, collector CollectorFunction) <- chan Message {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
@@ -14,7 +14,7 @@ func SCollector(name string, collector CollectorFunction) <- chan Message {
 
 	work := func(name string) {
 		//log.Printf("[%s] starting\n", name)
-		collector(&out)
+		collector(cfg, &out)
 		//log.Printf("[%s] ending\n", name)
 
 		wg.Done()
