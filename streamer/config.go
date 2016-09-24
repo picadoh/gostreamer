@@ -45,28 +45,6 @@ func LoadProperties(filename string) (Config, error) {
 	for {
 		line, err := reader.ReadString('\n')
 
-		if (err == nil || err == io.EOF) {
-			// no error or eof (for cases where the last line is a config as well)
-			line = strings.TrimSpace(line)
-
-			if (strings.HasPrefix(line, "#") || len(line) == 0) {
-				// ignore comment and empty lines
-				continue
-			}
-
-			pair := strings.Split(line, "=");
-
-			if (len(pair) != 2) {
-				// invalid property format
-				return nil, &ConfigError{Message:fmt.Sprintf("invalid property format: %s", pair)}
-			}
-
-			key := strings.TrimSpace(pair[0])
-			value := strings.TrimSpace(pair[1])
-
-			raw[key] = value
-		}
-
 		if (err == io.EOF) {
 			// all set
 			break
@@ -76,6 +54,25 @@ func LoadProperties(filename string) (Config, error) {
 			// error, stop
 			return nil, err
 		}
+
+		line = strings.TrimSpace(line)
+
+		if (strings.HasPrefix(line, "#") || len(line) == 0) {
+			// ignore comment and empty lines
+			continue
+		}
+
+		pair := strings.Split(line, "=");
+
+		if (len(pair) != 2) {
+			// invalid property format
+			return nil, &ConfigError{Message:fmt.Sprintf("invalid property format: %s", pair)}
+		}
+
+		key := strings.TrimSpace(pair[0])
+		value := strings.TrimSpace(pair[1])
+
+		raw[key] = value
 	}
 
 	config := &PropertiesConfig{Properties:raw}
