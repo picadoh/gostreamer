@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+var counter = streamer.NewCounter()
+
 func TweetsFileCollector(cfg streamer.Config, out *chan streamer.Message) {
 	lines, _ := streamer.ReadLines(cfg.GetString("source.file"))
 
@@ -54,49 +56,23 @@ func HashTagExtractor(cfg streamer.Config, input streamer.Message, out *chan str
 	}
 }
 
+func HashTagCounter(cfg streamer.Config, input streamer.Message, out*chan streamer.Message) {
+	hashtag := input.Get("hashtag").(string)
+
+	count := counter.Increment(hashtag)
+
+	out_message := streamer.NewMessage()
+	out_message.Put("hashtag", hashtag)
+	out_message.Put("count", count)
+
+	*out <- out_message
+}
+
 func HashTagCountPublisher(cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
 	hashtag, _ := input.Get("hashtag").(string)
 	count, _ := input.Get("count").(int)
 
 	log.Printf("Publishing %s/%d\n", hashtag, count)
-}
-
-func RunPipeline(cfg streamer.Config) {
-	var tweetSource = defineTweetSource(cfg)
-	var extractorParallelismHint = cfg.GetInt("parallelism.extractor")
-	var counterParallelismHint = cfg.GetInt("parallelism.counter")
-	var publisherParallelismHint = cfg.GetInt("parallelism.publisher")
-
-	sequence := streamer.SCollector(cfg, "collector", tweetSource)
-
-	extracted := streamer.SProcessor(cfg, "extractor", streamer.NewRandomDemux(extractorParallelismHint), sequence, HashTagExtractor)
-
-	counter := streamer.NewCounter()
-
-	go func() {
-		// start a routine that periodically prints the report
-		for {
-			log.Printf("count report: %s\n", counter.Count)
-			time.Sleep(10 * time.Second)
-		}
-	}()
-
-	counted := streamer.SProcessor(cfg, "counter", streamer.NewGroupDemux(counterParallelismHint, "hashtag"), extracted,
-		func(cfg streamer.Config, input streamer.Message, out*chan streamer.Message) {
-			hashtag := input.Get("hashtag").(string)
-
-			count := counter.Increment(hashtag)
-
-			out_message := streamer.NewMessage()
-			out_message.Put("hashtag", hashtag)
-			out_message.Put("count", count)
-
-			*out <- out_message
-		})
-
-	<-streamer.SProcessor(cfg, "publisher", streamer.NewGroupDemux(publisherParallelismHint, "hashtag"), counted, HashTagCountPublisher)
-
-	log.Printf("final count report: %s\n", counter.Count)
 }
 
 func defineTweetSource(cfg streamer.Config) streamer.CollectorFunction {
@@ -105,6 +81,35 @@ func defineTweetSource(cfg streamer.Config) streamer.CollectorFunction {
 	case "socket": return TweetsSocketCollector
 	}
 	return nil
+}
+
+func startReporter() {
+	go func() {
+		// start a routine that periodically prints the report
+		for {
+			log.Printf("count report: %s\n", counter.Count)
+			time.Sleep(10 * time.Second)
+		}
+	}()
+}
+
+func RunPipeline(cfg streamer.Config) {
+	var tweetSource = defineTweetSource(cfg)
+	var extractorParallelismHint = cfg.GetInt("parallelism.extractor")
+	var counterParallelismHint = cfg.GetInt("parallelism.counter")
+	var publisherParallelismHint = cfg.GetInt("parallelism.publisher")
+
+	startReporter()
+
+	sequence := streamer.SCollector(cfg, "collector", tweetSource)
+
+	extracted := streamer.SProcessor(cfg, "extractor", streamer.NewRandomDemux(extractorParallelismHint), sequence, HashTagExtractor)
+
+	counted := streamer.SProcessor(cfg, "counter", streamer.NewGroupDemux(counterParallelismHint, "hashtag"), extracted, HashTagCounter)
+
+	<-streamer.SProcessor(cfg, "publisher", streamer.NewGroupDemux(publisherParallelismHint, "hashtag"), counted, HashTagCountPublisher)
+
+	log.Printf("final count report: %s\n", counter.Count)
 }
 
 func main() {
