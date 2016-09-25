@@ -5,26 +5,22 @@ import (
 )
 
 /**
-The processor interface shall be implemented by custom logic that processes messages in some way (e.g. transformation,
-filtering, publishing, etc).
- */
-type Processor interface {
-	Execute(name string, cfg Config, input Message, out* chan Message)
-}
-
-/**
 The base processor is the orchestrator of the processor execution and handles concurrency aspects.
  */
-type BaseProcessor struct {
-	Delegate Processor
+type Processor struct {
+	Name string
+	Cfg Config
+	Process ProcessFunction
 	Balancer Demux
 }
+
+type ProcessFunction func(name string, cfg Config, input Message, out* chan Message)
 
 /**
 The base execute method starts multiple routines for a processor depending on the balancer configuration
 (e.g. parallelism hint) and waits for them to be complete.
  */
-func (processor *BaseProcessor) Execute(name string, cfg Config, input <- chan Message) <- chan Message {
+func (processor *Processor) Execute(input <- chan Message) <- chan Message {
 	var wg sync.WaitGroup
 	numTasks := processor.Balancer.GetFanOut()
 	wg.Add(numTasks)
@@ -33,7 +29,7 @@ func (processor *BaseProcessor) Execute(name string, cfg Config, input <- chan M
 
 	work := func(taskId int, inputStream <- chan Message) {
 		for message := range inputStream {
-			processor.Delegate.Execute(name, cfg, message, &out)
+			processor.Process(processor.Name, processor.Cfg, message, &out)
 		}
 		wg.Done()
 	}
@@ -51,4 +47,8 @@ func (processor *BaseProcessor) Execute(name string, cfg Config, input <- chan M
 	}()
 
 	return out
+}
+
+func NewProcessor(name string, cfg Config, process ProcessFunction, balancer Demux) Processor  {
+	return Processor{Name:name,Cfg:cfg,Process:process,Balancer:balancer}
 }

@@ -10,32 +10,9 @@ import (
 	"bufio"
 )
 
-type TextFileCollector struct {
-	streamer.Collector
-}
+var countState streamer.Counter = *streamer.NewCounter()
 
-type TextSocketCollector struct {
-	streamer.Collector
-}
-
-type HashTagExtractor struct {
-	streamer.Processor
-}
-
-type TextPublisher struct {
-	streamer.Processor
-}
-
-type HashTagCounter struct {
-	streamer.Processor
-	State streamer.Counter
-}
-
-type HashTagCountPublisher struct {
-	streamer.Processor
-}
-
-func (collector*TextFileCollector) Execute(name string, cfg streamer.Config, out*chan streamer.Message) {
+func TextFileCollector(name string, cfg streamer.Config, out*chan streamer.Message) {
 	lines, _ := streamer.ReadLines(cfg.GetString("source.file"))
 
 	for _, line := range lines {
@@ -46,7 +23,7 @@ func (collector*TextFileCollector) Execute(name string, cfg streamer.Config, out
 	}
 }
 
-func (collector*TextSocketCollector) Execute(name string, cfg streamer.Config, out*chan streamer.Message) {
+func TextSocketCollector(name string, cfg streamer.Config, out*chan streamer.Message) {
 	listener, _ := net.Listen("tcp", ":" + cfg.GetString("source.port"))
 	conn, _ := listener.Accept()
 
@@ -63,35 +40,34 @@ func (collector*TextSocketCollector) Execute(name string, cfg streamer.Config, o
 	}
 }
 
-func (processor*TextPublisher) Execute(name string, cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
+func WordExtractor(name string, cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
 	tweet, _ := input.Get("tweet").(string)
 
 	words := strings.Split(tweet, " ")
 
 	for _, word := range words {
-		fmt.Println(word)
+		out_message := streamer.NewMessage()
+		out_message.Put("word", word)
+		log.Printf("Extracted word: %s\n", word)
+		*out <- out_message
 	}
 }
 
-func (processor*HashTagExtractor) Execute(name string, cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
-	tweet, _ := input.Get("tweet").(string)
+func HashTagFilter(name string, cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
+	word, _ := input.Get("word").(string)
 
-	words := strings.Split(tweet, " ")
-
-	for _, word := range words {
-		if (strings.HasPrefix(word, "#")) {
-			out_message := streamer.NewMessage()
-			out_message.Put("hashtag", word)
-			log.Printf("Extracted hashtag %s\n", word)
-			*out <- out_message
-		}
+	if (strings.HasPrefix(word, "#")) {
+		out_message := streamer.NewMessage()
+		out_message.Put("hashtag", word)
+		log.Printf("Filtered hashtag %s\n", word)
+		*out <- out_message
 	}
 }
 
-func (processor*HashTagCounter) Execute(name string, cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
+func HashTagCounter(name string, cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
 	hashtag := input.Get("hashtag").(string)
 
-	count := processor.State.Increment(hashtag)
+	count := countState.Increment(hashtag)
 
 	out_message := streamer.NewMessage()
 	out_message.Put("hashtag", hashtag)
@@ -100,45 +76,44 @@ func (processor*HashTagCounter) Execute(name string, cfg streamer.Config, input 
 	*out <- out_message
 }
 
-func (processor*HashTagCountPublisher) Execute(name string, cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
+func HashTagCountPublisher(name string, cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
 	hashtag, _ := input.Get("hashtag").(string)
 	count, _ := input.Get("count").(int)
 
 	log.Printf("Publishing %s/%d\n", hashtag, count)
 }
 
-func defineTweetSource(cfg streamer.Config) streamer.Collector {
-	switch cfg.GetString("source.mode") {
-	case "file": return &TextFileCollector{}
-	case "socket": return &TextSocketCollector{}
-	}
-	return nil
-}
-
 func RunPipeline(cfg streamer.Config) {
 	// read config
-	var tweetSource = defineTweetSource(cfg)
 	var extractorParallelismHint = cfg.GetInt("parallelism.extractor")
+	var filterParallelismHint = cfg.GetInt("parallelism.filter")
 	var counterParallelismHint = cfg.GetInt("parallelism.counter")
 	var publisherParallelismHint = cfg.GetInt("parallelism.publisher")
 
-	// define state
-	var counterState = streamer.NewCounter()
-
-	// build pipeline
-	collector := &streamer.BaseCollector{Delegate:tweetSource}
-	extractor := &streamer.BaseProcessor{Delegate:&HashTagExtractor{}, Balancer:streamer.NewRandomDemux(extractorParallelismHint)}
-	counter := &streamer.BaseProcessor{Delegate:&HashTagCounter{State:*counterState}, Balancer:streamer.NewGroupDemux(counterParallelismHint, "hashtag")}
-	publisher := &streamer.BaseProcessor{Delegate:&HashTagCountPublisher{}, Balancer:streamer.NewGroupDemux(publisherParallelismHint, "hashtag")}
+	// build pipeline elements
+	collector := streamer.NewCollector("collector", cfg, defineCollectorFunction(cfg))
+	extractor := streamer.NewProcessor("extractor", cfg, WordExtractor, streamer.NewRandomDemux(extractorParallelismHint))
+	filter := streamer.NewProcessor("filter", cfg, HashTagFilter, streamer.NewRandomDemux(filterParallelismHint))
+	counter := streamer.NewProcessor("counter", cfg, HashTagCounter, streamer.NewGroupDemux(counterParallelismHint, "hashtag"))
+	publisher := streamer.NewProcessor("publisher", cfg, HashTagCountPublisher, streamer.NewGroupDemux(publisherParallelismHint, "hashtag"))
 
 	// execute pipeline
-	sequence := collector.Execute("collector", cfg)
-	extracted := extractor.Execute("extractor", cfg, sequence)
-	counted := counter.Execute("counter", cfg, extracted)
-	<-publisher.Execute("publisher", cfg, counted)
+	sequence := collector.Execute()
+	extracted := extractor.Execute(sequence)
+	filtered := filter.Execute(extracted)
+	counted := counter.Execute(filtered)
+	<-publisher.Execute(counted)
 
 	// print final report
-	log.Printf("final count report: %s\n", counterState.Count)
+	log.Printf("final count report: %s\n", countState.Count)
+}
+
+func defineCollectorFunction(cfg streamer.Config) streamer.CollectFunction {
+	switch cfg.GetString("source.mode") {
+	case "file": return TextFileCollector
+	case "socket": return TextSocketCollector
+	}
+	return nil
 }
 
 func main() {

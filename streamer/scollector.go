@@ -4,37 +4,33 @@ import (
 	"sync"
 )
 
-/*
-The collector interface shall be implemented with custom logic that collects information from a source.
- */
-type Collector interface {
-	Execute(name string, cfg Config, out* chan Message)
-}
-
 /**
 The base collector is the orchestrator of the collector execution and handles the concurrency aspects.
  */
-type BaseCollector struct {
-	Delegate Collector
-	Next Processor
+type Collector struct {
+	Name    string
+	Cfg     Config
+	Collect CollectFunction
 }
+
+type CollectFunction func(name string, cfg Config, out* chan Message)
 
 /**
 The base execute method starts the delegate collector inside a routine and waits for it to finish.
  */
-func (collector *BaseCollector) Execute(name string, cfg Config) <- chan Message {
+func (collector *Collector) Execute() <- chan Message {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
 	out := make(chan Message)
 
 	work := func(name string) {
-		collector.Delegate.Execute(name, cfg, &out)
+		collector.Collect(name, collector.Cfg, &out)
 		wg.Done()
 	}
 
 	go func() {
-		go work(name)
+		go work(collector.Name)
 	}()
 
 	go func() {
@@ -43,4 +39,8 @@ func (collector *BaseCollector) Execute(name string, cfg Config) <- chan Message
 	}()
 
 	return out
+}
+
+func NewCollector(name string, cfg Config, collect CollectFunction) Collector {
+	return Collector{Name:name,Cfg:cfg,Collect:collect}
 }
