@@ -35,7 +35,7 @@ func (processor *Processor) Execute(input <- chan Message) <- chan Message {
 	}
 
 	go func() {
-		processor.Balancer.Run(input)
+		processor.Balancer.Execute(input)
 		for i := 0; i < numTasks; i++ {
 			go work(i, processor.Balancer.GetOut(i))
 		}

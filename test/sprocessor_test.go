@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestCollectData(t *testing.T) {
+func TestProcessData(t *testing.T) {
 
 	input := make(chan streamer.Message)
 	demuxout := make(chan streamer.Message)
@@ -62,7 +62,7 @@ func NewMockDemux(output chan streamer.Message) streamer.Demux {
 	return demux
 }
 
-func (demux MockDemux) Run(input <- chan streamer.Message) {
+func (demux MockDemux) Execute(input <- chan streamer.Message) {
 	msg := streamer.NewMessage()
 	msg.Put("x","y")
 	demux.out[0] <- msg

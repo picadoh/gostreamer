@@ -8,9 +8,35 @@ import (
 	"fmt"
 	"net"
 	"bufio"
+	"sync"
 )
 
-var countState streamer.Counter = *streamer.NewCounter()
+/**
+The counter represents a thread-safe key/value counting structure.
+ */
+type Counter struct {
+	Mutex sync.RWMutex
+	Count map[string]int
+}
+
+func (counter *Counter) Increment(key string) int {
+	counter.Mutex.Lock()
+	defer counter.Mutex.Unlock()
+	counter.Count[key]++
+	return counter.Count[key]
+}
+
+func (counter *Counter) GetValue(key string) int {
+	counter.Mutex.Lock()
+	defer counter.Mutex.Unlock()
+	return counter.Count[key]
+}
+
+func NewCounter() *Counter {
+	return &Counter{Count:make(map[string]int)}
+}
+
+var countState Counter = *NewCounter()
 
 func TextFileCollector(name string, cfg streamer.Config, out*chan streamer.Message) {
 	lines, _ := streamer.ReadLines(cfg.GetString("source.file"))
@@ -91,11 +117,20 @@ func RunPipeline(cfg streamer.Config) {
 	var publisherParallelismHint = cfg.GetInt("parallelism.publisher")
 
 	// build pipeline elements
-	collector := streamer.NewCollector("collector", cfg, defineCollectorFunction(cfg))
-	extractor := streamer.NewProcessor("extractor", cfg, WordExtractor, streamer.NewRandomDemux(extractorParallelismHint))
-	filter := streamer.NewProcessor("filter", cfg, HashTagFilter, streamer.NewRandomDemux(filterParallelismHint))
-	counter := streamer.NewProcessor("counter", cfg, HashTagCounter, streamer.NewGroupDemux(counterParallelismHint, "hashtag"))
-	publisher := streamer.NewProcessor("publisher", cfg, HashTagCountPublisher, streamer.NewGroupDemux(publisherParallelismHint, "hashtag"))
+	collector := streamer.NewCollector("collector", cfg,
+		defineCollectorFunction(cfg))
+
+	extractor := streamer.NewProcessor("extractor", cfg,
+		WordExtractor, streamer.NewDemux(extractorParallelismHint, streamer.NewRandomDemuxCtx()))
+
+	filter := streamer.NewProcessor("filter", cfg,
+		HashTagFilter, streamer.NewDemux(filterParallelismHint, streamer.NewRandomDemuxCtx()))
+
+	counter := streamer.NewProcessor("counter", cfg,
+		HashTagCounter, streamer.NewDemux(counterParallelismHint, streamer.NewGroupDemuxCtx("hashtag")))
+
+	publisher := streamer.NewProcessor("publisher", cfg,
+		HashTagCountPublisher, streamer.NewDemux(publisherParallelismHint, streamer.NewGroupDemuxCtx("hashtag")))
 
 	// execute pipeline
 	sequence := collector.Execute()
