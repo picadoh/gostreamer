@@ -5,6 +5,10 @@ import (
 	"bufio"
 )
 
+/**
+Read lines from a file specified by its path.
+It may return a list of strings (one line for each position) and an error that indicates if a problem has occurred.
+ */
 func ReadLines(path string) ([]string, error) {
 	file, err := os.Open(path)
 	if err != nil {

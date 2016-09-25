@@ -19,10 +19,12 @@ func TestCollectData(t *testing.T) {
 
 	<-input
 
+	victim := &streamer.BaseProcessor{Delegate:&MockProcessor{}, Balancer:NewMockDemux(demuxout)}
+
 	var output <- chan streamer.Message
 	go func() {
 		cfg := &streamer.PropertiesConfig{Properties:make(map[string]string)}
-		output = streamer.SProcessor(cfg, "x", NewMockDemux(demuxout), input, MockProcessor)
+		output = victim.Execute("x", cfg, input)
 		done <- true
 	}()
 
@@ -43,7 +45,11 @@ func TestCollectData(t *testing.T) {
 	close(demuxout)
 }
 
-func MockProcessor(cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
+type MockProcessor struct {
+	streamer.Processor
+}
+
+func (processor *MockProcessor) Execute(name string, cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
 	*out <- input
 }
 

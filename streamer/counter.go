@@ -4,6 +4,9 @@ import (
 	"sync"
 )
 
+/**
+The counter represents a thread-safe key/value counting structure.
+ */
 type Counter struct {
 	Mutex sync.RWMutex
 	Count map[string]int

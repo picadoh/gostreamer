@@ -4,12 +4,19 @@ import (
 	"sync"
 )
 
+/**
+The group demux splits an input channel into multiple output channels based on a given message key,
+by retrieving the value and hashing it on a module of the number of output channels.
+ */
 type GroupDemux struct {
 	Demux
 	out      [] chan Message // Output channels
 	groupKey string          // group distribution key
 }
 
+/**
+Builds a new group demux based on the number of specified output channels and the key to be used in the group.
+ */
 func NewGroupDemux(nOutChannels int, groupKey string) *GroupDemux {
 	demux := &GroupDemux{groupKey:groupKey}
 	demux.out = make([]chan Message, nOutChannels)
@@ -19,6 +26,10 @@ func NewGroupDemux(nOutChannels int, groupKey string) *GroupDemux {
 	return demux
 }
 
+/**
+Executes the demultiplex function by assigning an index to a message based on its value (all messages with the same
+value will be assigned the same index).
+ */
 func (demux *GroupDemux) Run(input <- chan Message) {
 	nchannels := len(demux.out);
 
@@ -32,7 +43,6 @@ func (demux *GroupDemux) Run(input <- chan Message) {
 
 			// Emit message
 			demux.out[boundhash] <- message
-			//log.Printf("[groupdemux] Assigned hash %d for %s/%s\n", boundhash, demux.groupKey, message)
 		}
 
 		wg.Done()
@@ -42,16 +52,21 @@ func (demux *GroupDemux) Run(input <- chan Message) {
 		wg.Wait()
 
 		for i := 0; i < nchannels; i++ {
-			//log.Printf("[groupdemux] out[%d]:%d", i, len(demux.out[i]))
 			close(demux.out[i])
 		}
 	}()
 }
 
+/**
+Gets the output channel for a given index.
+ */
 func (demux *GroupDemux) GetOut(index int) <- chan Message {
 	return demux.out[index]
 }
 
+/**
+Gets the number of output channels.
+ */
 func (demux *GroupDemux) GetFanOut() int {
 	return len(demux.out);
 }
