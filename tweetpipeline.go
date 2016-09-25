@@ -39,7 +39,7 @@ func NewCounter() *Counter {
 var countState Counter = *NewCounter()
 
 func TextFileCollector(name string, cfg streamer.Config, out*chan streamer.Message) {
-	lines, _ := streamer.ReadLines(cfg.GetString("source.file"))
+	lines, _ := streamer.LoadTextFile(cfg.GetString("source.file"))
 
 	for _, line := range lines {
 		out_message := streamer.NewMessage()

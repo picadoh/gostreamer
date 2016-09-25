@@ -1,12 +1,9 @@
 package streamer
 
 import (
-	"os"
-	"bufio"
 	"strings"
 	"strconv"
 	"fmt"
-	"io"
 )
 
 /**
@@ -39,36 +36,16 @@ Loads the properties into a properties configuration instance. May return the
 configuration itself along with an error that indicates if there was a problem loading the configuration.
  */
 func LoadProperties(filename string) (Config, error) {
-	var raw map[string]string = make(map[string]string)
+	lines, err := LoadTextFile(filename)
 
-	if len(filename) == 0 {
+	if (err != nil) {
 		return nil, nil
 	}
 
-	file, err := os.Open(filename)
+	var raw map[string]string = make(map[string]string)
 
-	if err != nil {
-		return nil, err
-	}
-
-	defer file.Close()
-
-	reader := bufio.NewReader(file)
-
-	for {
-		line, err := reader.ReadString('\n')
-
-		if (err == io.EOF) {
-			// all set
-			break
-		}
-
-		if (err != nil) {
-			// error, stop
-			return nil, err
-		}
-
-		line = strings.TrimSpace(line)
+	for i := 0; i < len(lines); i++ {
+		line := strings.TrimSpace(lines[i])
 
 		if (strings.HasPrefix(line, "#") || len(line) == 0) {
 			// ignore comment and empty lines

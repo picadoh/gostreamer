@@ -15,7 +15,7 @@ func TestReadLines(t *testing.T) {
 		panic(err)
 	}
 
-	readContents, _ := streamer.ReadLines(filename)
+	readContents, _ := streamer.LoadTextFile(filename)
 
 	if readContents[0] != "hello world" {
 		t.Errorf("Expected 'hello world', got '%s'\n", readContents)
@@ -32,7 +32,7 @@ func TestEmptyFile(t *testing.T) {
 	filename := "streamer_test.txt"
 	ioutil.WriteFile(filename, []byte{}, 0644)
 
-	readContents, err := streamer.ReadLines(filename)
+	readContents, err := streamer.LoadTextFile(filename)
 
 	if (err != nil) {
 		t.Errorf("Expected file %s, but error occurred: %s\n", filename, err)
@@ -46,7 +46,7 @@ func TestEmptyFile(t *testing.T) {
 }
 
 func TestMissingFile(t *testing.T) {
-	lines, err := streamer.ReadLines("streamer_missing.txt")
+	lines, err := streamer.LoadTextFile("streamer_missing.txt")
 
 	if (err == nil) {
 		t.Errorf("Expected file not found error, found %s\n", lines)

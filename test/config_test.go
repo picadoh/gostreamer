@@ -9,7 +9,7 @@ import (
 
 func TestLoadProperties(t *testing.T) {
 	filename := "streamer_config.cfg"
-	contents := []byte("mystring=xpto\n#comment\n\nmyint=5\n")
+	contents := []byte("mystring=xpto\n#comment\n\nmyint=5")
 	err := ioutil.WriteFile(filename, contents, 0644)
 	if err != nil {
 		panic(err)
@@ -30,7 +30,7 @@ func TestLoadProperties(t *testing.T) {
 
 func TestFailedLoadProperties(t *testing.T) {
 	filename := "streamer_config.cfg"
-	contents := []byte("mystring=xpto\nmyint\n")
+	contents := []byte("mystring=xpto\nmyint")
 	err := ioutil.WriteFile(filename, contents, 0644)
 	if err != nil {
 		panic(err)
