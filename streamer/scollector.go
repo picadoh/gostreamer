@@ -8,9 +8,9 @@ import (
 The base collector is the orchestrator of the collector execution and handles the concurrency aspects.
  */
 type Collector struct {
-	Name    string
-	Cfg     Config
-	Collect CollectFunction
+	name    string
+	cfg     Config
+	collect CollectFunction
 }
 
 type CollectFunction func(name string, cfg Config, out* chan Message)
@@ -25,12 +25,12 @@ func (collector *Collector) Execute() <- chan Message {
 	out := make(chan Message)
 
 	work := func(name string) {
-		collector.Collect(name, collector.Cfg, &out)
+		collector.collect(name, collector.cfg, &out)
 		wg.Done()
 	}
 
 	go func() {
-		go work(collector.Name)
+		go work(collector.name)
 	}()
 
 	go func() {
@@ -41,6 +41,9 @@ func (collector *Collector) Execute() <- chan Message {
 	return out
 }
 
+/**
+Creates a new collector.
+ */
 func NewCollector(name string, cfg Config, collect CollectFunction) Collector {
-	return Collector{Name:name,Cfg:cfg,Collect:collect}
+	return Collector{name:name,cfg:cfg,collect:collect}
 }

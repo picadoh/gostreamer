@@ -19,7 +19,7 @@ func TestProcessData(t *testing.T) {
 
 	<-input
 
-	cfg := &streamer.PropertiesConfig{Properties:make(map[string]string)}
+	cfg := streamer.NewPropertiesConfig()
 
 	victim := streamer.NewProcessor("x", cfg, MockProcess, NewMockDemux(demuxout))
 

@@ -114,7 +114,7 @@ func RunPipeline(cfg streamer.Config) {
 	<-publisher.Execute(counted)
 
 	// print final report
-	log.Printf("final count report: %s\n", countState.Count)
+	log.Printf("final count report: %s\n", countState.ToString())
 }
 
 func defineCollectorFunction(cfg streamer.Config) streamer.CollectFunction {

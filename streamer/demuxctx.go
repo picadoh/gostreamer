@@ -34,7 +34,6 @@ randomly.
  */
 type RandomDemuxContext struct {
 	DemuxContext
-	group string
 }
 
 func (fun *RandomDemuxContext) Execute(nChannels int, input Message) int {

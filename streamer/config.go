@@ -11,7 +11,7 @@ Config error structure represents a configuration error message.
  */
 type ConfigError struct {
 	error
-	Message string
+	message string
 }
 
 /**
@@ -28,7 +28,7 @@ Properties config is a key/value pair based configuration structure.
  */
 type PropertiesConfig struct {
 	Config
-	Properties map[string]string
+	properties map[string]string
 }
 
 /**
@@ -56,7 +56,7 @@ func LoadProperties(filename string) (Config, error) {
 
 		if (len(pair) != 2) {
 			// invalid property format
-			return nil, &ConfigError{Message:fmt.Sprintf("invalid property format: %s", pair)}
+			return nil, &ConfigError{message:fmt.Sprintf("invalid property format: %s", pair)}
 		}
 
 		key := strings.TrimSpace(pair[0])
@@ -65,7 +65,7 @@ func LoadProperties(filename string) (Config, error) {
 		raw[key] = value
 	}
 
-	config := &PropertiesConfig{Properties:raw}
+	config := &PropertiesConfig{properties:raw}
 	return config, nil
 }
 
@@ -73,14 +73,14 @@ func LoadProperties(filename string) (Config, error) {
 Gets a configured string value.
  */
 func (config *PropertiesConfig) GetString(key string) string {
-	return (*config).Properties[key]
+	return (*config).properties[key]
 }
 
 /**
 Gets a configured int value.
  */
 func (config *PropertiesConfig) GetInt(key string) int {
-	value, _ := strconv.Atoi(config.Properties[key])
+	value, _ := strconv.Atoi(config.properties[key])
 	return value
 }
 
@@ -88,12 +88,19 @@ func (config *PropertiesConfig) GetInt(key string) int {
 Dumps the configuration internal map into a string.
  */
 func (config *PropertiesConfig) ToString() string {
-	return fmt.Sprintf("%s", config.Properties)
+	return fmt.Sprintf("%s", config.properties)
 }
 
 /**
 Returns the error message.
  */
 func (configError *ConfigError) Error() string {
-	return configError.Message
+	return configError.message
+}
+
+/**
+Builds a new properties configuration structure
+ */
+func NewPropertiesConfig() Config {
+	return &PropertiesConfig{properties:make(map[string]string)}
 }

@@ -9,7 +9,7 @@ func TestCollectData(t *testing.T) {
 
 	done := make(chan bool)
 
-	cfg := &streamer.PropertiesConfig{Properties:make(map[string]string)}
+	cfg := streamer.NewPropertiesConfig()
 
 	victim := streamer.NewCollector("x", cfg, MockCollect)
 
