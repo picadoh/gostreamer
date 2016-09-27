@@ -24,13 +24,9 @@ func (collector *Collector) Execute() <- chan Message {
 
 	out := make(chan Message)
 
-	work := func(name string) {
-		collector.collect(name, collector.cfg, &out)
-		wg.Done()
-	}
-
 	go func() {
-		go work(collector.name)
+		collector.collect(collector.name, collector.cfg, &out)
+		wg.Done()
 	}()
 
 	go func() {
