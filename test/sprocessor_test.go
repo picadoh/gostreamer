@@ -46,8 +46,8 @@ func TestProcessData(t *testing.T) {
 	close(demuxout)
 }
 
-func MockProcess(name string, cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
-	*out <- input
+func MockProcess(name string, cfg streamer.Config, input streamer.Message, out chan streamer.Message) {
+	out <- input
 }
 
 type MockDemux struct {

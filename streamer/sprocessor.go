@@ -14,7 +14,7 @@ type Processor struct {
 	demux Demux
 }
 
-type ProcessFunction func(name string, cfg Config, input Message, out* chan Message)
+type ProcessFunction func(name string, cfg Config, input Message, out chan Message)
 
 /**
 The base execute method starts multiple routines for a processor depending on the balancer configuration
@@ -29,7 +29,7 @@ func (processor *Processor) Execute(input <- chan Message) <- chan Message {
 
 	work := func(taskId int, inputStream <- chan Message) {
 		for message := range inputStream {
-			processor.process(processor.name, processor.cfg, message, &out)
+			processor.process(processor.name, processor.cfg, message, out)
 		}
 		wg.Done()
 	}

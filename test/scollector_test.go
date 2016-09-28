@@ -34,8 +34,8 @@ func TestCollectData(t *testing.T) {
 	}
 }
 
-func MockCollect(name string, cfg streamer.Config, out *chan streamer.Message) {
+func MockCollect(name string, cfg streamer.Config, out chan streamer.Message) {
 	out_message := streamer.NewMessage()
 	out_message.Put("test", "hello world")
-	*out <- out_message
+	out <- out_message
 }

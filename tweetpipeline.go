@@ -12,18 +12,18 @@ import (
 
 var countState streamer.Counter = *streamer.NewCounter()
 
-func TextFileCollector(name string, cfg streamer.Config, out*chan streamer.Message) {
+func TextFileCollector(name string, cfg streamer.Config, out chan streamer.Message) {
 	lines, _ := streamer.LoadTextFile(cfg.GetString("source.file"))
 
 	for _, line := range lines {
 		out_message := streamer.NewMessage()
 		out_message.Put("tweet", line)
 		log.Printf("Read message from file: %s\n", out_message)
-		*out <- out_message
+		out <- out_message
 	}
 }
 
-func TextSocketCollector(name string, cfg streamer.Config, out*chan streamer.Message) {
+func TextSocketCollector(name string, cfg streamer.Config, out chan streamer.Message) {
 	listener, _ := net.Listen("tcp", ":" + cfg.GetString("source.port"))
 	conn, _ := listener.Accept()
 
@@ -36,11 +36,11 @@ func TextSocketCollector(name string, cfg streamer.Config, out*chan streamer.Mes
 
 		log.Printf("Received raw message from socket: %s\n", out_message)
 
-		*out <- out_message
+		out <- out_message
 	}
 }
 
-func WordExtractor(name string, cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
+func WordExtractor(name string, cfg streamer.Config, input streamer.Message, out chan streamer.Message) {
 	tweet, _ := input.Get("tweet").(string)
 
 	words := strings.Split(tweet, " ")
@@ -49,22 +49,22 @@ func WordExtractor(name string, cfg streamer.Config, input streamer.Message, out
 		out_message := streamer.NewMessage()
 		out_message.Put("word", word)
 		log.Printf("Extracted word: %s\n", word)
-		*out <- out_message
+		out <- out_message
 	}
 }
 
-func HashTagFilter(name string, cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
+func HashTagFilter(name string, cfg streamer.Config, input streamer.Message, out chan streamer.Message) {
 	word, _ := input.Get("word").(string)
 
 	if (strings.HasPrefix(word, "#")) {
 		out_message := streamer.NewMessage()
 		out_message.Put("hashtag", word)
 		log.Printf("Filtered hashtag %s\n", word)
-		*out <- out_message
+		out <- out_message
 	}
 }
 
-func HashTagCounter(name string, cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
+func HashTagCounter(name string, cfg streamer.Config, input streamer.Message, out chan streamer.Message) {
 	hashtag := input.Get("hashtag").(string)
 
 	count := countState.Increment(hashtag)
@@ -73,10 +73,10 @@ func HashTagCounter(name string, cfg streamer.Config, input streamer.Message, ou
 	out_message.Put("hashtag", hashtag)
 	out_message.Put("count", count)
 
-	*out <- out_message
+	out <- out_message
 }
 
-func HashTagCountPublisher(name string, cfg streamer.Config, input streamer.Message, out *chan streamer.Message) {
+func HashTagCountPublisher(name string, cfg streamer.Config, input streamer.Message, out chan streamer.Message) {
 	hashtag, _ := input.Get("hashtag").(string)
 	count, _ := input.Get("count").(int)
 

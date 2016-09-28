@@ -13,7 +13,7 @@ type Collector struct {
 	collect CollectFunction
 }
 
-type CollectFunction func(name string, cfg Config, out* chan Message)
+type CollectFunction func(name string, cfg Config, out chan Message)
 
 /**
 The base execute method starts the delegate collector inside a routine and waits for it to finish.
@@ -25,7 +25,7 @@ func (collector *Collector) Execute() <- chan Message {
 	out := make(chan Message)
 
 	go func() {
-		collector.collect(collector.name, collector.cfg, &out)
+		collector.collect(collector.name, collector.cfg, out)
 		wg.Done()
 	}()
 
