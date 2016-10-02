@@ -18,14 +18,12 @@ func TestDemuxExecute(t *testing.T) {
 	victim := streamer.NewDemux(3, NewMockDemuxCtx())
 
 	// prepare the scenario
-	input := make(chan streamer.Message)
+	input := make(chan streamer.Message, 1)
 
 	msg := streamer.NewMessage()
 	msg.Put("testkey", "testvalue")
 
-	go func() {
-		input <- msg
-	}()
+	input <- msg
 
 	victim.Execute(input)
 	output := <-victim.GetOut(1)

@@ -3,36 +3,25 @@ package streamer_test
 import (
 	"github.com/picadoh/gostreamer/streamer"
 	"testing"
+	"log"
 )
 
 func TestProcessData(t *testing.T) {
+	input := make(chan streamer.Message, 1)
+	defer close(input)
 
-	input := make(chan streamer.Message)
 	demuxout := make(chan streamer.Message)
-	done := make(chan bool)
+	defer close(demuxout)
 
-	go func() {
-		msg := streamer.NewMessage()
-		msg.Put("testkey", "testvalue")
-		input <- msg
-	}()
-
-	<-input
+	msg := streamer.NewMessage()
+	msg.Put("testkey", "testvalue")
+	input <- msg
 
 	cfg := streamer.NewPropertiesConfig()
 
 	victim := streamer.NewProcessor("x", cfg, MockProcess, NewMockDemux(demuxout))
 
-	var output <- chan streamer.Message
-	go func() {
-		output = victim.Execute(input)
-		done <- true
-	}()
-
-	<-done
-
-	close(done)
-	close(input)
+	victim.Execute(input)
 
 	dmuxMsg := <-demuxout
 	if dmuxMsg == nil {
@@ -42,11 +31,10 @@ func TestProcessData(t *testing.T) {
 	if dmuxMsg.Get("x") != "y" {
 		t.Error("Expected y, found ", dmuxMsg.Get("x"))
 	}
-
-	close(demuxout)
 }
 
 func MockProcess(name string, cfg streamer.Config, input streamer.Message, out chan streamer.Message) {
+	log.Printf("Executing mocked process %s with config %s", name, cfg.ToString())
 	out <- input
 }
 
@@ -64,7 +52,7 @@ func NewMockDemux(output chan streamer.Message) streamer.Demux {
 
 func (demux MockDemux) Execute(input <- chan streamer.Message) {
 	msg := streamer.NewMessage()
-	msg.Put("x","y")
+	msg.Put("x", "y")
 	demux.out[0] <- msg
 }
 

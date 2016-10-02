@@ -11,8 +11,6 @@ func TestRandomDemuxContext(t *testing.T) {
 	demuxCtx := streamer.NewRandomDemuxCtx()
 	mockMsg := streamer.NewMessage()
 
-
-
 	if demuxCtx == nil {
 		t.Error("Expected output, found nothing")
 	}

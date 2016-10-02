@@ -3,25 +3,15 @@ package streamer_test
 import (
 	"github.com/picadoh/gostreamer/streamer"
 	"testing"
+	"log"
 )
 
 func TestCollectData(t *testing.T) {
-
-	done := make(chan bool)
-
 	cfg := streamer.NewPropertiesConfig()
 
 	victim := streamer.NewCollector("x", cfg, MockCollect)
 
-	var output <- chan streamer.Message
-	go func() {
-		output = victim.Execute()
-		done <- true
-	}()
-
-	<-done
-
-	close(done)
+	output := victim.Execute()
 
 	msg := <-output
 
@@ -35,6 +25,8 @@ func TestCollectData(t *testing.T) {
 }
 
 func MockCollect(name string, cfg streamer.Config, out chan streamer.Message) {
+	log.Printf("Executing mocked collect %s with config %s", name, cfg.ToString())
+
 	out_message := streamer.NewMessage()
 	out_message.Put("test", "hello world")
 	out <- out_message
