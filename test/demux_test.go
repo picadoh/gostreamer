@@ -19,6 +19,7 @@ func TestDemuxExecute(t *testing.T) {
 
 	// prepare the scenario
 	input := make(chan streamer.Message, 1)
+	defer close(input)
 
 	msg := streamer.NewMessage()
 	msg.Put("testkey", "testvalue")
