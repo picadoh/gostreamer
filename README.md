@@ -3,17 +3,15 @@
 This is an example on how to use Golang channels to build an execution pipeline
 
 ### Components
-**streamer** builds the main pipeline file using collectors and processors
+**Collector** receives a function that collects information and publish it in a channel in the form of a message.
 
-**scollector** receives a function that collects information and publish it in a channel in the form of a message.
+**Processor** picks an input channel with messages and executes some function (passed as parameter) over it
 
-**sprocessor** picks an input channel with messages and executes some function (passed as parameter) over it
+**Demux** demultiplexes the input stream into multiple output streams based on a given number of output channels and a given index function.
 
-**demuxrnd** generates a set of output channels out of a single input channel for concurrent execution based on a random index (e.g. messages are forwarded to a random output channel)
+You may want to refer to tweetpipeline.go for a sample pipeline using the above components.
 
-**demuxgrp** generates a set of output channels out of a single input channel for concurrent execution based on a value from the message (all messages with the same indicated value forward to the same output channel)
-
-### How it works?
+### Sample pipeline
 
     ------------         -----------         --------         ---------         -----------
     | Collector | ----> | Extractor | ----> | Filter | ----> | Counter | ----> | Publisher |

@@ -8,10 +8,10 @@ import (
 The base processor is the orchestrator of the processor execution and handles concurrency aspects.
  */
 type Processor struct {
-	name string
-	cfg Config
+	name    string
+	cfg     Config
 	process ProcessFunction
-	demux Demux
+	demux   ChannelDemux
 }
 
 type ProcessFunction func(name string, cfg Config, input Message, out chan Message)
@@ -22,7 +22,7 @@ The base execute method starts multiple routines for a processor depending on th
  */
 func (processor *Processor) Execute(input <- chan Message) <- chan Message {
 	var wg sync.WaitGroup
-	numTasks := processor.demux.GetFanOut()
+	numTasks := processor.demux.FanOut()
 	wg.Add(numTasks)
 
 	out := make(chan Message)
@@ -37,7 +37,7 @@ func (processor *Processor) Execute(input <- chan Message) <- chan Message {
 	go func() {
 		processor.demux.Execute(input)
 		for i := 0; i < numTasks; i++ {
-			go work(i, processor.demux.GetOut(i))
+			go work(i, processor.demux.Output(i))
 		}
 	}()
 
@@ -52,6 +52,6 @@ func (processor *Processor) Execute(input <- chan Message) <- chan Message {
 /**
 Creates a new processor.
  */
-func NewProcessor(name string, cfg Config, process ProcessFunction, demux Demux) Processor  {
-	return Processor{name:name,cfg:cfg,process:process,demux:demux}
+func NewProcessor(name string, cfg Config, process ProcessFunction, demux ChannelDemux) Processor {
+	return Processor{name:name, cfg:cfg, process:process, demux:demux}
 }

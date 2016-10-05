@@ -95,16 +95,16 @@ func RunPipeline(cfg streamer.Config) {
 		defineCollectorFunction(cfg))
 
 	extractor := streamer.NewProcessor("extractor", cfg,
-		WordExtractor, streamer.NewDemux(extractorParallelismHint, streamer.NewRandomDemuxCtx()))
+		WordExtractor, streamer.NewIndexedChannelDemux(extractorParallelismHint, streamer.RandomIndex))
 
 	filter := streamer.NewProcessor("filter", cfg,
-		HashTagFilter, streamer.NewDemux(filterParallelismHint, streamer.NewRandomDemuxCtx()))
+		HashTagFilter, streamer.NewIndexedChannelDemux(filterParallelismHint, streamer.RandomIndex))
 
 	counter := streamer.NewProcessor("counter", cfg,
-		HashTagCounter, streamer.NewDemux(counterParallelismHint, streamer.NewGroupDemuxCtx("hashtag")))
+		HashTagCounter, streamer.NewIndexedChannelDemux(counterParallelismHint, streamer.NewGroupDemux("hashtag").GroupIndex))
 
 	publisher := streamer.NewProcessor("publisher", cfg,
-		HashTagCountPublisher, streamer.NewDemux(publisherParallelismHint, streamer.NewGroupDemuxCtx("hashtag")))
+		HashTagCountPublisher, streamer.NewIndexedChannelDemux(publisherParallelismHint, streamer.NewGroupDemux("hashtag").GroupIndex))
 
 	// execute pipeline
 	sequence := collector.Execute()

@@ -6,16 +6,16 @@ import (
 )
 
 func TestDemuxContextFanOut(t *testing.T) {
-	victim := streamer.NewDemux(5, NewMockDemuxCtx())
+	victim := streamer.NewIndexedChannelDemux(5, MockIndexFunction)
 
-	if (victim.GetFanOut() != 5) {
-		t.Errorf("Expected fan out 5, found %d", victim.GetFanOut())
+	if (victim.FanOut() != 5) {
+		t.Errorf("Expected fan out 5, found %d", victim.FanOut())
 	}
 }
 
 func TestDemuxExecute(t *testing.T) {
 	// init the victim
-	victim := streamer.NewDemux(3, NewMockDemuxCtx())
+	victim := streamer.NewIndexedChannelDemux(3, MockIndexFunction)
 
 	// prepare the scenario
 	input := make(chan streamer.Message, 1)
@@ -27,7 +27,7 @@ func TestDemuxExecute(t *testing.T) {
 	input <- msg
 
 	victim.Execute(input)
-	output := <-victim.GetOut(1)
+	output := <-victim.Output(1)
 
 	if (output == nil) {
 		t.Errorf("Expected nothing, found %s", output)
@@ -38,14 +38,6 @@ func TestDemuxExecute(t *testing.T) {
 	}
 }
 
-type MockDemuxContext struct {
-	streamer.DemuxContext
-}
-
-func (fun *MockDemuxContext) Execute(nChannels int, input streamer.Message) int {
+func MockIndexFunction(nChannels int, input streamer.Message) int {
 	return 1
-}
-
-func NewMockDemuxCtx() streamer.DemuxContext {
-	return &MockDemuxContext{}
 }

@@ -39,27 +39,27 @@ func MockProcess(name string, cfg streamer.Config, input streamer.Message, out c
 }
 
 type MockDemux struct {
-	streamer.Demux
-	out [] chan streamer.Message // Output channels
+	streamer.ChannelDemux
+	out [] chan streamer.Message
 }
 
-func NewMockDemux(output chan streamer.Message) streamer.Demux {
-	demux := MockDemux{}
+func NewMockDemux(output chan streamer.Message) streamer.ChannelDemux {
+	demux := &MockDemux{}
 	demux.out = make([]chan streamer.Message, 1)
 	demux.out[0] = output
 	return demux
 }
 
-func (demux MockDemux) Execute(input <- chan streamer.Message) {
+func (demux *MockDemux) Execute(input <- chan streamer.Message) {
 	msg := streamer.NewMessage()
 	msg.Put("x", "y")
 	demux.out[0] <- msg
 }
 
-func (demux MockDemux) GetOut(index int) <- chan streamer.Message {
+func (demux *MockDemux) Output(index int) <- chan streamer.Message {
 	return demux.out[index]
 }
 
-func (demux MockDemux) GetFanOut() int {
+func (demux *MockDemux) FanOut() int {
 	return len(demux.out);
 }
