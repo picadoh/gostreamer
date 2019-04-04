@@ -1,13 +1,13 @@
 package streamer
 
 import (
-	"sync"
 	"fmt"
+	"sync"
 )
 
 /**
 The counter represents a thread-safe key/value counting structure.
- */
+*/
 type Counter struct {
 	Mutex sync.RWMutex
 	value map[string]int
@@ -27,9 +27,9 @@ func (counter *Counter) GetValue(key string) int {
 }
 
 func (counter *Counter) ToString() string {
-	return fmt.Sprintf("%s", counter.value)
+	return fmt.Sprintf("%v", counter.value)
 }
 
 func NewCounter() *Counter {
-	return &Counter{value:make(map[string]int)}
+	return &Counter{value: make(map[string]int)}
 }
