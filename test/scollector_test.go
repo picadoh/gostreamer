@@ -1,9 +1,10 @@
 package streamer_test
 
 import (
-	"github.com/picadoh/gostreamer/streamer"
-	"testing"
 	"log"
+	"testing"
+
+	"github.com/picadoh/gostreamer/streamer"
 )
 
 func TestCollectData(t *testing.T) {

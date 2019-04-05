@@ -1,10 +1,11 @@
 package streamer_test
 
 import (
-	"testing"
-	"github.com/picadoh/gostreamer/streamer"
 	"math/rand"
+	"testing"
 	"time"
+
+	"github.com/picadoh/gostreamer/streamer"
 )
 
 func TestRandomDemuxContext(t *testing.T) {

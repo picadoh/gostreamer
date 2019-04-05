@@ -1,10 +1,11 @@
 package streamer_test
 
 import (
-	"testing"
 	"io/ioutil"
-	"github.com/picadoh/gostreamer/streamer"
 	"os"
+	"testing"
+
+	"github.com/picadoh/gostreamer/streamer"
 )
 
 func TestLoadProperties(t *testing.T) {
@@ -17,11 +18,11 @@ func TestLoadProperties(t *testing.T) {
 
 	config, _ := streamer.LoadProperties(filename)
 
-	if (config.GetString("mystring") != "xpto") {
+	if config.GetString("mystring") != "xpto" {
 		t.Errorf("Expected 'myvalue', got '%s'\n", config.GetString("mystring"))
 	}
 
-	if (config.GetInt("myint") != 5) {
+	if config.GetInt("myint") != 5 {
 		t.Errorf("Expected 5, got '%d'\n", config.GetInt("myint"))
 	}
 
@@ -38,7 +39,7 @@ func TestFailedLoadProperties(t *testing.T) {
 
 	config, err := streamer.LoadProperties(filename)
 
-	if (err == nil) {
+	if err == nil {
 		t.Errorf("Expected 'error', got config '%s'\n", config)
 	}
 

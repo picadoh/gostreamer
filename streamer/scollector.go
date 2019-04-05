@@ -6,7 +6,7 @@ import (
 
 /**
 The base collector is the orchestrator of the collector execution and handles the concurrency aspects.
- */
+*/
 type Collector struct {
 	name    string
 	cfg     Config
@@ -17,8 +17,8 @@ type CollectFunction func(name string, cfg Config, out chan Message)
 
 /**
 The base execute method starts the delegate collector inside a routine and waits for it to finish.
- */
-func (collector *Collector) Execute() <- chan Message {
+*/
+func (collector *Collector) Execute() <-chan Message {
 	var wg sync.WaitGroup
 	wg.Add(1)
 
@@ -39,7 +39,7 @@ func (collector *Collector) Execute() <- chan Message {
 
 /**
 Creates a new collector.
- */
+*/
 func NewCollector(name string, cfg Config, collect CollectFunction) Collector {
-	return Collector{name:name,cfg:cfg,collect:collect}
+	return Collector{name: name, cfg: cfg, collect: collect}
 }

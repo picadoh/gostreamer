@@ -2,9 +2,10 @@ package streamer_test
 
 import (
 	"io/ioutil"
-	"github.com/picadoh/gostreamer/streamer"
-	"testing"
 	"os"
+	"testing"
+
+	"github.com/picadoh/gostreamer/streamer"
 )
 
 func TestReadLines(t *testing.T) {
@@ -34,11 +35,11 @@ func TestEmptyFile(t *testing.T) {
 
 	readContents, err := streamer.LoadTextFile(filename)
 
-	if (err != nil) {
+	if err != nil {
 		t.Errorf("Expected file %s, but error occurred: %s\n", filename, err)
 	}
 
-	if (len(readContents) != 0) {
+	if len(readContents) != 0 {
 		t.Errorf("Expected 0 lines, found %d\n", len(readContents))
 	}
 
@@ -48,7 +49,7 @@ func TestEmptyFile(t *testing.T) {
 func TestMissingFile(t *testing.T) {
 	lines, err := streamer.LoadTextFile("streamer_missing.txt")
 
-	if (err == nil) {
+	if err == nil {
 		t.Errorf("Expected file not found error, found %s\n", lines)
 	}
 }

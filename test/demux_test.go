@@ -1,14 +1,15 @@
 package streamer_test
 
 import (
-	"github.com/picadoh/gostreamer/streamer"
 	"testing"
+
+	"github.com/picadoh/gostreamer/streamer"
 )
 
 func TestDemuxContextFanOut(t *testing.T) {
 	victim := streamer.NewIndexedChannelDemux(5, MockIndexFunction)
 
-	if (victim.FanOut() != 5) {
+	if victim.FanOut() != 5 {
 		t.Errorf("Expected fan out 5, found %d", victim.FanOut())
 	}
 }
@@ -29,11 +30,11 @@ func TestDemuxExecute(t *testing.T) {
 	victim.Execute(input)
 	output := <-victim.Output(1)
 
-	if (output == nil) {
+	if output == nil {
 		t.Errorf("Expected nothing, found %s", output)
 	}
 
-	if (output.Get("testkey") != "testvalue") {
+	if output.Get("testkey") != "testvalue" {
 		t.Errorf("Expected testvalue, found %s", output.Get("testkey"))
 	}
 }

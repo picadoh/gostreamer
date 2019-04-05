@@ -1,9 +1,10 @@
 package streamer_test
 
 import (
-	"github.com/picadoh/gostreamer/streamer"
-	"testing"
 	"log"
+	"testing"
+
+	"github.com/picadoh/gostreamer/streamer"
 )
 
 func TestProcessData(t *testing.T) {
@@ -40,7 +41,7 @@ func MockProcess(name string, cfg streamer.Config, input streamer.Message, out c
 
 type MockDemux struct {
 	streamer.ChannelDemux
-	out [] chan streamer.Message
+	out []chan streamer.Message
 }
 
 func NewMockDemux(output chan streamer.Message) streamer.ChannelDemux {
@@ -50,16 +51,16 @@ func NewMockDemux(output chan streamer.Message) streamer.ChannelDemux {
 	return demux
 }
 
-func (demux *MockDemux) Execute(input <- chan streamer.Message) {
+func (demux *MockDemux) Execute(input <-chan streamer.Message) {
 	msg := streamer.NewMessage()
 	msg.Put("x", "y")
 	demux.out[0] <- msg
 }
 
-func (demux *MockDemux) Output(index int) <- chan streamer.Message {
+func (demux *MockDemux) Output(index int) <-chan streamer.Message {
 	return demux.out[index]
 }
 
 func (demux *MockDemux) FanOut() int {
-	return len(demux.out);
+	return len(demux.out)
 }
